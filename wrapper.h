@@ -1,2 +1,2 @@
 #include <stdbool.h>
-#include <digilent/waveforms/dwf.h>
+#include "dwf.h"
