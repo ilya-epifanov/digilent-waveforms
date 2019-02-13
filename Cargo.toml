@@ -1,6 +1,6 @@
 [package]
 name = "digilent-waveforms"
-version = "0.0.2"
+version = "0.0.3"
 authors = ["Ilya Epifanov <elijah.epifanov@gmail.com>"]
 edition = "2018"
 description = "Bindings for Digilent Waveforms API"
@@ -11,6 +11,9 @@ time = "0.1.42"
 itertools = "0.8.0"
 failure = "0.1.5"
 failure_derive = "0.1.5"
+
+[features]
+weak-linkage = []
 
 [build-dependencies]
 bindgen = "0.42.2"

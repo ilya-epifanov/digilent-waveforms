@@ -4,7 +4,9 @@ use std::env;
 use std::path::PathBuf;
 
 fn main() {
-    println!("cargo:rustc-link-lib=dwf");
+    if !cfg!(feature = "weak-linkage") {
+        println!("cargo:rustc-link-lib=dwf");
+    }
 
     let bindings = bindgen::Builder::default()
         .header("wrapper.h")
