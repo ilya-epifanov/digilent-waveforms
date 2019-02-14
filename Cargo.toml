@@ -1,10 +1,11 @@
 [package]
 name = "digilent-waveforms"
-version = "0.0.3"
+version = "0.0.4"
 authors = ["Ilya Epifanov <elijah.epifanov@gmail.com>"]
 edition = "2018"
 description = "Bindings for Digilent Waveforms API"
 license = "MIT OR Apache-2.0"
+links = "dwf"
 
 [dependencies]
 time = "0.1.42"
@@ -13,7 +14,8 @@ failure = "0.1.5"
 failure_derive = "0.1.5"
 
 [features]
-weak-linkage = []
+link-with-stub = []
 
 [build-dependencies]
-bindgen = "0.42.2"
+bindgen = "0.47.1"
+regex = "1.1.0"

@@ -1,3 +1,5 @@
+#![allow(dead_code, non_upper_case_globals)]
+
 extern crate time;
 #[macro_use] extern crate failure_derive;
 
@@ -5,7 +7,6 @@ use std::ffi::CStr;
 use std::mem;
 use std::os::raw::c_char;
 use std::os::raw::c_int;
-use std::ptr;
 
 use time::Duration;
 
@@ -66,10 +67,10 @@ pub struct Error {
 
 impl Display for Error {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
-        self.kind.fmt(f);
+        self.kind.fmt(f)?;
         if self.message.len() > 0 {
-            f.write_str(": ");
-            f.write_str(&self.message);
+            f.write_str(": ")?;
+            f.write_str(&self.message)?;
         }
         Ok(())
     }
