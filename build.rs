@@ -8,7 +8,6 @@ use std::io::BufWriter;
 use std::io::Write;
 use std::path::Path;
 use std::path::PathBuf;
-use std::process::Command;
 
 use regex::Regex;
 
@@ -39,10 +38,7 @@ fn main() {
         };
         let stub_so = Path::new("stubs").join(so_name);
 
-        Command::new("clang")
-            .args(&["-shared", "-fPIC", "-x", "c++", "-o", stub_so.to_string_lossy().as_ref(), stub_c.to_string_lossy().as_ref()])
-            .status()
-            .expect("Failed to compile stub library");
+        cc::Build::new().file(&stub_c).shared_flag(true).cpp(true).compile(stub_so.to_string_lossy().as_ref());
     }
 
     println!("cargo:rustc-link-lib=dwf");
