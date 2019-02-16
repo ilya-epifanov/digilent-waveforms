@@ -6,7 +6,6 @@ use std::io::BufRead;
 use std::io::BufReader;
 use std::io::BufWriter;
 use std::io::Write;
-use std::path::Path;
 use std::path::PathBuf;
 use std::process::Command;
 
@@ -14,11 +13,12 @@ use regex::Regex;
 
 fn main() {
     if cfg!(feature = "link-with-stub") {
-        println!("cargo:rustc-link-search=native={}/stubs", std::env::current_dir().unwrap().to_string_lossy());
+        let stubs_dir = std::env::current_dir().unwrap().join("stubs");
+        println!("cargo:rustc-link-search=native={}", stubs_dir.to_string_lossy());
 
-        let stub_c = Path::new("stubs").join("dwf.c");
+        let stub_c = stubs_dir.join("dwf.c");
         let mut out = BufWriter::new(File::create(&stub_c).expect(r###"Can't create "dwf.c""###));
-        writeln!(out, r###"#include "../dwf.h""###).unwrap();
+        writeln!(out, r###"#include "..{}dwf.h""###, std::path::MAIN_SEPARATOR).unwrap();
         let fn_def_end_regex = Regex::new(r###"\);.*"###).unwrap();
         for line in BufReader::new(File::open("dwf.h").expect(r###"Can't open "dwf.h""###)).lines() {
             let line = line.unwrap();
@@ -37,7 +37,7 @@ fn main() {
         } else {
             unimplemented!("Only Linux, Mac OS and Windows are supported");
         };
-        let stub_so = Path::new("stubs").join(so_name);
+        let stub_so = stubs_dir.join(so_name);
 
         let cc_out = Command::new("clang")
             .args(&["-shared", "-fPIC", "-x", "c++", "-o", stub_so.to_string_lossy().as_ref(), stub_c.to_string_lossy().as_ref()])
