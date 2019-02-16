@@ -8,6 +8,7 @@ use std::io::BufWriter;
 use std::io::Write;
 use std::path::Path;
 use std::path::PathBuf;
+use std::process::Command;
 
 use regex::Regex;
 
@@ -27,16 +28,25 @@ fn main() {
         }
         drop(out);
 
-        let so_name = "dwf";
+        let so_name = if cfg!(target_os = "linux") {
+            "libdwf.so"
+        } else if cfg!(target_os = "windows") {
+            "dwf.dll"
+        } else if cfg!(target_os = "macos") {
+            "libdwf.dylib"
+        } else {
+            unimplemented!("Only Linux, Mac OS and Windows are supported");
+        };
         let stub_so = Path::new("stubs").join(so_name);
 
-        cc::Build::new()
-            .file(&stub_c)
-            .shared_flag(true)
-            .cpp(true)
-            .warnings(false)
-            .extra_warnings(false)
-            .compile(stub_so.to_string_lossy().as_ref());
+        let cc_out = Command::new("clang")
+            .args(&["-shared", "-fPIC", "-x", "c++", "-o", stub_so.to_string_lossy().as_ref(), stub_c.to_string_lossy().as_ref()])
+            .output()
+            .expect("Failed to compile stub library");
+
+        if !cc_out.status.success() {
+            eprintln!("cc output: {:?}", cc_out);
+        }
     }
 
     println!("cargo:rustc-link-lib=dwf");

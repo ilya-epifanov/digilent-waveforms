@@ -1,6 +1,6 @@
 [package]
 name = "digilent-waveforms"
-version = "0.0.6"
+version = "0.0.7"
 authors = ["Ilya Epifanov <elijah.epifanov@gmail.com>"]
 edition = "2018"
 description = "Bindings for Digilent Waveforms API"
@@ -19,4 +19,3 @@ link-with-stub = []
 [build-dependencies]
 bindgen = "0.47.1"
 regex = "1.1.0"
-cc = "1.0.29"
