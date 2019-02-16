@@ -27,18 +27,16 @@ fn main() {
         }
         drop(out);
 
-        let so_name = if cfg!(target_os = "linux") {
-            "libdwf.so"
-        } else if cfg!(target_os = "windows") {
-            "dwf.dll"
-        } else if cfg!(target_os = "macos") {
-            "libdwf.dylib"
-        } else {
-            unimplemented!("Only Linux, Mac OS and Windows are supported");
-        };
+        let so_name = "dwf";
         let stub_so = Path::new("stubs").join(so_name);
 
-        cc::Build::new().file(&stub_c).shared_flag(true).cpp(true).compile(stub_so.to_string_lossy().as_ref());
+        cc::Build::new()
+            .file(&stub_c)
+            .shared_flag(true)
+            .cpp(true)
+            .warnings(false)
+            .extra_warnings(false)
+            .compile(stub_so.to_string_lossy().as_ref());
     }
 
     println!("cargo:rustc-link-lib=dwf");
