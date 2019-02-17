@@ -40,7 +40,8 @@ fn main() {
             .expect(r###"Can't open "dwf.h""###)).lines() {
             let line = line.unwrap();
             if line.starts_with("DWFAPI BOOL ") {
-                writeln!(out, "{}", fn_def_end_regex.replace(&line, ") { return 0; }")).unwrap();
+                let (_, signature) = line.split_at(7);
+                writeln!(out, "BOOL {} {{ return 0; }}", fn_def_end_regex.replace(&signature, "")).unwrap();
             }
         }
         drop(out);
