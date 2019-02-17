@@ -47,8 +47,14 @@ fn main() {
         };
         let stub_so = stubs_dir.join(so_name);
 
+
+        let mut cc_args = vec!["-shared"];
+        if !cfg!(target_os = "windows") {
+            cc_args.push("-fPIC");
+        }
+        cc_args.extend_from_slice(&["-x", "c++", "-o", stub_so.to_str().unwrap(), stub_c.to_str().unwrap()]);
         let cc_out = Command::new("clang")
-            .args(&["-shared", "-fPIC", "-x", "c++", "-o", stub_so.to_string_lossy().as_ref(), stub_c.to_string_lossy().as_ref()])
+            .args(&cc_args)
             .output()
             .expect("Failed to compile stub library");
 
