@@ -12,8 +12,10 @@ use std::process::Command;
 use regex::Regex;
 
 fn main() {
+    let out_path = PathBuf::from(env::var("OUT_DIR").unwrap());
+
     if cfg!(feature = "link-with-stub") {
-        let stubs_dir = std::env::current_dir().unwrap().join("stubs");
+        let stubs_dir = out_path.join("stubs");
         println!("cargo:rustc-link-search=native={}", stubs_dir.to_string_lossy());
 
         let stub_c = stubs_dir.join("dwf.c");
@@ -56,7 +58,6 @@ fn main() {
         .generate()
         .expect("Unable to generate bindings");
 
-    let out_path = PathBuf::from(env::var("OUT_DIR").unwrap());
     bindings
         .write_to_file(out_path.join("bindings.rs"))
         .expect("Couldn't write bindings!");
