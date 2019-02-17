@@ -16,19 +16,28 @@ fn main() {
 
     if cfg!(feature = "link-with-stub") {
         let stubs_dir = out_path.join("stubs");
+        let current_dir = env::current_dir()
+            .expect("Can't get current directory");
 
         if stubs_dir.exists() {
-            std::fs::remove_dir_all(&stubs_dir).expect("Can't remove stubs directory");
+            std::fs::remove_dir_all(&stubs_dir)
+                .expect("Can't remove stubs directory");
         }
-        std::fs::create_dir_all(&stubs_dir).expect("Can't create stubs directory");
+        std::fs::create_dir_all(&stubs_dir)
+            .expect("Can't create stubs directory");
+
+        std::fs::copy(current_dir.join("dwf.h"), stubs_dir.join("dwf.h"))
+            .expect("Can't copy dwf.h to stubs directory");
 
         println!("cargo:rustc-link-search=native={}", stubs_dir.to_string_lossy());
 
         let stub_c = stubs_dir.join("dwf.c");
-        let mut out = BufWriter::new(File::create(&stub_c).expect(r###"Can't create "dwf.c""###));
-        writeln!(out, r###"#include "..{}dwf.h""###, std::path::MAIN_SEPARATOR).unwrap();
+        let mut out = BufWriter::new(File::create(&stub_c)
+            .expect(r###"Can't create "dwf.c""###));
+        writeln!(out, r###"#include "dwf.h""###).unwrap();
         let fn_def_end_regex = Regex::new(r###"\);.*"###).unwrap();
-        for line in BufReader::new(File::open("dwf.h").expect(r###"Can't open "dwf.h""###)).lines() {
+        for line in BufReader::new(File::open("dwf.h")
+            .expect(r###"Can't open "dwf.h""###)).lines() {
             let line = line.unwrap();
             if line.starts_with("DWFAPI BOOL ") {
                 writeln!(out, "{}", fn_def_end_regex.replace(&line, ") { return 0; }")).unwrap();
