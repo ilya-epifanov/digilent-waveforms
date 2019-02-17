@@ -16,6 +16,12 @@ fn main() {
 
     if cfg!(feature = "link-with-stub") {
         let stubs_dir = out_path.join("stubs");
+
+        if stubs_dir.exists() {
+            std::fs::remove_dir_all(&stubs_dir).expect("Can't remove stubs directory");
+        }
+        std::fs::create_dir_all(&stubs_dir).expect("Can't create stubs directory");
+
         println!("cargo:rustc-link-search=native={}", stubs_dir.to_string_lossy());
 
         let stub_c = stubs_dir.join("dwf.c");
