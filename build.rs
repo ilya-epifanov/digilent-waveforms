@@ -35,13 +35,12 @@ fn main() {
         let mut out = BufWriter::new(File::create(&stub_c)
             .expect(r###"Can't create "dwf.c""###));
         writeln!(out, r###"#include "dwf.h""###).unwrap();
-        let fn_def_end_regex = Regex::new(r###"\);.*"###).unwrap();
+        let fn_def_pattern = Regex::new(r###"DWFAPI BOOL (.*);.*"###).unwrap();
         for line in BufReader::new(File::open("dwf.h")
             .expect(r###"Can't open "dwf.h""###)).lines() {
-            let line = line.unwrap();
-            if line.starts_with("DWFAPI BOOL ") {
-                let (_, signature) = line.split_at(7);
-                writeln!(out, "BOOL {} {{ return 0; }}", fn_def_end_regex.replace(&signature, "")).unwrap();
+            if let Some(captures) = fn_def_pattern.captures(&line.unwrap()) {
+                let signature = captures.get(1).unwrap().as_str();
+                writeln!(out, "BOOL {} {{ return 0; }}", signature).unwrap();
             }
         }
         drop(out);
