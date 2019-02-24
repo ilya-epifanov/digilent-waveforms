@@ -114,6 +114,38 @@ fn get_last_error() -> Error {
     }
 }
 
+#[derive(Copy, Clone, PartialEq, Debug)]
+#[repr(isize)]
+pub enum TriggerSource {
+    NoTrigger = trigsrcNone as isize,
+    PC = trigsrcPC as isize,
+    DetectorAnalogIn = trigsrcDetectorAnalogIn as isize,
+    DetectorDigitalIn = trigsrcDetectorDigitalIn as isize,
+    AnalogIn = trigsrcAnalogIn as isize,
+    DigitalIn = trigsrcDigitalIn as isize,
+    DigitalOut = trigsrcDigitalOut as isize,
+    AnalogOut1 = trigsrcAnalogOut1 as isize,
+    AnalogOut2 = trigsrcAnalogOut2 as isize,
+    AnalogOut3 = trigsrcAnalogOut3 as isize,
+    AnalogOut4 = trigsrcAnalogOut4 as isize,
+    External1 = trigsrcExternal1 as isize,
+    External2 = trigsrcExternal2 as isize,
+    External3 = trigsrcExternal3 as isize,
+    External4 = trigsrcExternal4 as isize,
+    High = trigsrcHigh as isize,
+    Low = trigsrcLow as isize,
+}
+
+impl TriggerSource {
+    fn code(self) -> TRIGSRC {
+        self as TRIGSRC
+    }
+
+    fn from_code(code: TRIGSRC) -> TriggerSource {
+        unsafe { mem::transmute(code as isize) }
+    }
+}
+
 #[derive(PartialEq, Debug)]
 pub struct DeviceConfigInfo {
     device_ix: c_int,
@@ -271,6 +303,42 @@ impl<'a> AnalogOutNode<'a> {
     pub fn set_function(&self, func: AnalogOutFunction) -> Result<()> {
         unsafe {
             match func {
+                AnalogOutFunction::Const { offset } => {
+                    try_dwf!(FDwfAnalogOutNodeFunctionSet(self.out.device.handle, self.out.ix, self.ix, funcDC));
+                    try_dwf!(FDwfAnalogOutNodeOffsetSet(self.out.device.handle, self.out.ix, self.ix, offset));
+                },
+                AnalogOutFunction::RampUp { frequency, amplitude, offset, symmetry, phase_deg } => {
+                    try_dwf!(FDwfAnalogOutNodeFunctionSet(self.out.device.handle, self.out.ix, self.ix, funcRampUp));
+                    try_dwf!(FDwfAnalogOutNodeFrequencySet(self.out.device.handle, self.out.ix, self.ix, frequency));
+                    try_dwf!(FDwfAnalogOutNodeAmplitudeSet(self.out.device.handle, self.out.ix, self.ix, amplitude));
+                    try_dwf!(FDwfAnalogOutNodeOffsetSet(self.out.device.handle, self.out.ix, self.ix, offset));
+                    try_dwf!(FDwfAnalogOutNodeSymmetrySet(self.out.device.handle, self.out.ix, self.ix, symmetry));
+                    try_dwf!(FDwfAnalogOutNodePhaseSet(self.out.device.handle, self.out.ix, self.ix, phase_deg));
+                },
+                AnalogOutFunction::RampDown { frequency, amplitude, offset, symmetry, phase_deg } => {
+                    try_dwf!(FDwfAnalogOutNodeFunctionSet(self.out.device.handle, self.out.ix, self.ix, funcRampDown));
+                    try_dwf!(FDwfAnalogOutNodeFrequencySet(self.out.device.handle, self.out.ix, self.ix, frequency));
+                    try_dwf!(FDwfAnalogOutNodeAmplitudeSet(self.out.device.handle, self.out.ix, self.ix, amplitude));
+                    try_dwf!(FDwfAnalogOutNodeOffsetSet(self.out.device.handle, self.out.ix, self.ix, offset));
+                    try_dwf!(FDwfAnalogOutNodeSymmetrySet(self.out.device.handle, self.out.ix, self.ix, symmetry));
+                    try_dwf!(FDwfAnalogOutNodePhaseSet(self.out.device.handle, self.out.ix, self.ix, phase_deg));
+                },
+                AnalogOutFunction::Sine { frequency, amplitude, offset, symmetry, phase_deg } => {
+                    try_dwf!(FDwfAnalogOutNodeFunctionSet(self.out.device.handle, self.out.ix, self.ix, funcSine));
+                    try_dwf!(FDwfAnalogOutNodeFrequencySet(self.out.device.handle, self.out.ix, self.ix, frequency));
+                    try_dwf!(FDwfAnalogOutNodeAmplitudeSet(self.out.device.handle, self.out.ix, self.ix, amplitude));
+                    try_dwf!(FDwfAnalogOutNodeOffsetSet(self.out.device.handle, self.out.ix, self.ix, offset));
+                    try_dwf!(FDwfAnalogOutNodeSymmetrySet(self.out.device.handle, self.out.ix, self.ix, symmetry));
+                    try_dwf!(FDwfAnalogOutNodePhaseSet(self.out.device.handle, self.out.ix, self.ix, phase_deg));
+                },
+                AnalogOutFunction::Square { frequency, amplitude, offset, symmetry, phase_deg } => {
+                    try_dwf!(FDwfAnalogOutNodeFunctionSet(self.out.device.handle, self.out.ix, self.ix, funcSquare));
+                    try_dwf!(FDwfAnalogOutNodeFrequencySet(self.out.device.handle, self.out.ix, self.ix, frequency));
+                    try_dwf!(FDwfAnalogOutNodeAmplitudeSet(self.out.device.handle, self.out.ix, self.ix, amplitude));
+                    try_dwf!(FDwfAnalogOutNodeOffsetSet(self.out.device.handle, self.out.ix, self.ix, offset));
+                    try_dwf!(FDwfAnalogOutNodeSymmetrySet(self.out.device.handle, self.out.ix, self.ix, symmetry));
+                    try_dwf!(FDwfAnalogOutNodePhaseSet(self.out.device.handle, self.out.ix, self.ix, phase_deg));
+                },
                 AnalogOutFunction::Triangle { frequency, amplitude, offset, symmetry, phase_deg } => {
                     try_dwf!(FDwfAnalogOutNodeFunctionSet(self.out.device.handle, self.out.ix, self.ix, funcTriangle));
                     try_dwf!(FDwfAnalogOutNodeFrequencySet(self.out.device.handle, self.out.ix, self.ix, frequency));
@@ -278,7 +346,7 @@ impl<'a> AnalogOutNode<'a> {
                     try_dwf!(FDwfAnalogOutNodeOffsetSet(self.out.device.handle, self.out.ix, self.ix, offset));
                     try_dwf!(FDwfAnalogOutNodeSymmetrySet(self.out.device.handle, self.out.ix, self.ix, symmetry));
                     try_dwf!(FDwfAnalogOutNodePhaseSet(self.out.device.handle, self.out.ix, self.ix, phase_deg));
-                }
+                },
             }
         }
         Ok(())
@@ -293,7 +361,30 @@ impl<'a> AnalogOutNode<'a> {
 }
 
 pub enum AnalogOutFunction {
-    Triangle { frequency: f64, amplitude: f64, offset: f64, symmetry: f64, phase_deg: f64 }
+    Const { offset: f64 },
+    RampUp { frequency: f64, amplitude: f64, offset: f64, symmetry: f64, phase_deg: f64 },
+    RampDown { frequency: f64, amplitude: f64, offset: f64, symmetry: f64, phase_deg: f64 },
+    Sine { frequency: f64, amplitude: f64, offset: f64, symmetry: f64, phase_deg: f64 },
+    Square { frequency: f64, amplitude: f64, offset: f64, symmetry: f64, phase_deg: f64 },
+    Triangle { frequency: f64, amplitude: f64, offset: f64, symmetry: f64, phase_deg: f64 },
+}
+
+#[derive(Copy, Clone, PartialEq, Debug)]
+#[repr(isize)]
+pub enum AnalogOutIdleMode {
+    Disable = DwfAnalogOutIdleDisable as isize,
+    Offset = DwfAnalogOutIdleOffset as isize,
+    Initial = DwfAnalogOutIdleInitial as isize,
+}
+
+impl AnalogOutIdleMode {
+    fn code(self) -> DwfAnalogOutIdle {
+        self as DwfAnalogOutIdle
+    }
+
+    fn from_code(code: DwfAnalogOutIdle) -> AnalogOutIdleMode {
+        unsafe { mem::transmute(code as isize) }
+    }
 }
 
 pub struct AnalogOut<'a> {
@@ -319,6 +410,20 @@ impl<'a> AnalogOut<'a> {
     pub fn set_repeat_count(&self, repeat_cnt: i32) -> Result<()> {
         unsafe {
             try_dwf!(FDwfAnalogOutRepeatSet(self.device.handle, self.ix, repeat_cnt));
+        }
+        Ok(())
+    }
+
+    pub fn set_trigger_source(&self, src: TriggerSource) -> Result<()> {
+        unsafe {
+            try_dwf!(FDwfAnalogOutTriggerSourceSet(self.device.handle, self.ix, src.code()));
+        }
+        Ok(())
+    }
+
+    pub fn set_idle_mode(&self, mode: AnalogOutIdleMode) -> Result<()> {
+        unsafe {
+            try_dwf!(FDwfAnalogOutIdleSet(self.device.handle, self.ix, mode.code()));
         }
         Ok(())
     }
