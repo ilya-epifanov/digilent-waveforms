@@ -1,6 +1,6 @@
 [package]
 name = "digilent-waveforms"
-version = "0.0.15"
+version = "0.0.16-alpha.0"
 authors = ["Ilya Epifanov <elijah.epifanov@gmail.com>"]
 edition = "2018"
 description = "Bindings for Digilent Waveforms API"
