@@ -162,15 +162,12 @@ pub struct DeviceConfigInfo {
     pub digital_out_buf_size: i32,
 }
 
-macro_rules! try_dwf {
-    ($e: expr) => {
-        {
-            let ret = $e;
-            if ret as BOOL == false_ as BOOL {
-                return Err(get_last_error());
-            }
-        }
-    };
+fn handle_dwf_errors(res: BOOL) -> Result<()> {
+    if res as BOOL == false_ as BOOL {
+        Err(get_last_error())
+    } else {
+        Ok(())
+    }
 }
 
 impl DeviceConfigInfo {
@@ -179,7 +176,7 @@ impl DeviceConfigInfo {
             let mut dev = Device {
                 handle: mem::uninitialized(),
             };
-            try_dwf!(FDwfDeviceConfigOpen(self.device_ix, self.config_ix, (&mut dev.handle) as *mut HDWF));
+            handle_dwf_errors(FDwfDeviceConfigOpen(self.device_ix, self.config_ix, (&mut dev.handle) as *mut HDWF))?;
             Ok(dev)
         }
     }
@@ -205,62 +202,62 @@ pub struct DeviceInfoList {
 pub fn devices() -> Result<DeviceInfoList> {
     unsafe {
         let mut devices_cnt: c_int = 0;
-        try_dwf!(FDwfEnum(enumfilterAll, &mut devices_cnt as *mut c_int));
+        handle_dwf_errors(FDwfEnum(enumfilterAll, &mut devices_cnt as *mut c_int))?;
         let mut devices = Vec::with_capacity(devices_cnt as usize);
 
         for device_ix in 0..devices_cnt {
             let mut id: DEVID = mem::uninitialized();
             let mut ver: DEVVER = mem::uninitialized();
 
-            try_dwf!(FDwfEnumDeviceType(device_ix, &mut id as *mut DEVID, &mut ver as *mut DEVVER));
+            handle_dwf_errors(FDwfEnumDeviceType(device_ix, &mut id as *mut DEVID, &mut ver as *mut DEVVER))?;
 
             let mut in_use: BOOL = mem::uninitialized();
-            try_dwf!(FDwfEnumDeviceIsOpened(device_ix, &mut in_use as *mut BOOL));
+            handle_dwf_errors(FDwfEnumDeviceIsOpened(device_ix, &mut in_use as *mut BOOL))?;
 
             let mut user_name = [0 as c_char; 32];
-            try_dwf!(FDwfEnumUserName(device_ix, user_name.as_mut_ptr()));
+            handle_dwf_errors(FDwfEnumUserName(device_ix, user_name.as_mut_ptr()))?;
 
             let mut name = [0 as c_char; 32];
-            try_dwf!(FDwfEnumDeviceName(device_ix, name.as_mut_ptr()));
+            handle_dwf_errors(FDwfEnumDeviceName(device_ix, name.as_mut_ptr()))?;
 
             let mut serial = [0 as c_char; 32];
-            try_dwf!(FDwfEnumSN(device_ix, serial.as_mut_ptr()));
+            handle_dwf_errors(FDwfEnumSN(device_ix, serial.as_mut_ptr()))?;
 
             let mut configs_cnt: c_int = 0;
-            try_dwf!(FDwfEnumConfig(device_ix, &mut configs_cnt as *mut c_int));
+            handle_dwf_errors(FDwfEnumConfig(device_ix, &mut configs_cnt as *mut c_int))?;
 
             let mut configs = Vec::with_capacity(configs_cnt as usize);
 
             for config_ix in 0..configs_cnt {
                 let mut analog_inputs: c_int = 0;
-                try_dwf!(FDwfEnumConfigInfo(config_ix, DECIAnalogInChannelCount, &mut analog_inputs as *mut c_int));
+                handle_dwf_errors(FDwfEnumConfigInfo(config_ix, DECIAnalogInChannelCount, &mut analog_inputs as *mut c_int))?;
 
                 let mut analog_outputs: c_int = 0;
-                try_dwf!(FDwfEnumConfigInfo(config_ix, DECIAnalogInChannelCount, &mut analog_outputs as *mut c_int));
+                handle_dwf_errors(FDwfEnumConfigInfo(config_ix, DECIAnalogInChannelCount, &mut analog_outputs as *mut c_int))?;
 
                 let mut analog_ios: c_int = 0;
-                try_dwf!(FDwfEnumConfigInfo(config_ix, DECIAnalogInChannelCount, &mut analog_ios as *mut c_int));
+                handle_dwf_errors(FDwfEnumConfigInfo(config_ix, DECIAnalogInChannelCount, &mut analog_ios as *mut c_int))?;
 
                 let mut digital_inputs: c_int = 0;
-                try_dwf!(FDwfEnumConfigInfo(config_ix, DECIDigitalInChannelCount, &mut digital_inputs as *mut c_int));
+                handle_dwf_errors(FDwfEnumConfigInfo(config_ix, DECIDigitalInChannelCount, &mut digital_inputs as *mut c_int))?;
 
                 let mut digital_outputs: c_int = 0;
-                try_dwf!(FDwfEnumConfigInfo(config_ix, DECIDigitalInChannelCount, &mut digital_outputs as *mut c_int));
+                handle_dwf_errors(FDwfEnumConfigInfo(config_ix, DECIDigitalInChannelCount, &mut digital_outputs as *mut c_int))?;
 
                 let mut digital_ios: c_int = 0;
-                try_dwf!(FDwfEnumConfigInfo(config_ix, DECIDigitalInChannelCount, &mut digital_ios as *mut c_int));
+                handle_dwf_errors(FDwfEnumConfigInfo(config_ix, DECIDigitalInChannelCount, &mut digital_ios as *mut c_int))?;
 
                 let mut analog_in_buf_size: c_int = 0;
-                try_dwf!(FDwfEnumConfigInfo(config_ix, DECIAnalogInBufferSize, &mut analog_in_buf_size as *mut c_int));
+                handle_dwf_errors(FDwfEnumConfigInfo(config_ix, DECIAnalogInBufferSize, &mut analog_in_buf_size as *mut c_int))?;
 
                 let mut analog_out_buf_size: c_int = 0;
-                try_dwf!(FDwfEnumConfigInfo(config_ix, DECIAnalogOutBufferSize, &mut analog_out_buf_size as *mut c_int));
+                handle_dwf_errors(FDwfEnumConfigInfo(config_ix, DECIAnalogOutBufferSize, &mut analog_out_buf_size as *mut c_int))?;
 
                 let mut digital_in_buf_size: c_int = 0;
-                try_dwf!(FDwfEnumConfigInfo(config_ix, DECIDigitalInBufferSize, &mut digital_in_buf_size as *mut c_int));
+                handle_dwf_errors(FDwfEnumConfigInfo(config_ix, DECIDigitalInBufferSize, &mut digital_in_buf_size as *mut c_int))?;
 
                 let mut digital_out_buf_size: c_int = 0;
-                try_dwf!(FDwfEnumConfigInfo(config_ix, DECIDigitalOutBufferSize, &mut digital_out_buf_size as *mut c_int));
+                handle_dwf_errors(FDwfEnumConfigInfo(config_ix, DECIDigitalOutBufferSize, &mut digital_out_buf_size as *mut c_int))?;
 
                 configs.insert(config_ix as usize, DeviceConfigInfo {
                     device_ix,
@@ -304,48 +301,48 @@ impl<'a> AnalogOutNode<'a> {
         unsafe {
             match func {
                 AnalogOutFunction::Const { offset } => {
-                    try_dwf!(FDwfAnalogOutNodeFunctionSet(self.out.device.handle, self.out.ix, self.ix, funcDC));
-                    try_dwf!(FDwfAnalogOutNodeOffsetSet(self.out.device.handle, self.out.ix, self.ix, offset));
+                    handle_dwf_errors(FDwfAnalogOutNodeFunctionSet(self.out.device.handle, self.out.ix, self.ix, funcDC))?;
+                    handle_dwf_errors(FDwfAnalogOutNodeOffsetSet(self.out.device.handle, self.out.ix, self.ix, offset))?;
                 },
                 AnalogOutFunction::RampUp { frequency, amplitude, offset, symmetry, phase_deg } => {
-                    try_dwf!(FDwfAnalogOutNodeFunctionSet(self.out.device.handle, self.out.ix, self.ix, funcRampUp));
-                    try_dwf!(FDwfAnalogOutNodeFrequencySet(self.out.device.handle, self.out.ix, self.ix, frequency));
-                    try_dwf!(FDwfAnalogOutNodeAmplitudeSet(self.out.device.handle, self.out.ix, self.ix, amplitude));
-                    try_dwf!(FDwfAnalogOutNodeOffsetSet(self.out.device.handle, self.out.ix, self.ix, offset));
-                    try_dwf!(FDwfAnalogOutNodeSymmetrySet(self.out.device.handle, self.out.ix, self.ix, symmetry));
-                    try_dwf!(FDwfAnalogOutNodePhaseSet(self.out.device.handle, self.out.ix, self.ix, phase_deg));
+                    handle_dwf_errors(FDwfAnalogOutNodeFunctionSet(self.out.device.handle, self.out.ix, self.ix, funcRampUp))?;
+                    handle_dwf_errors(FDwfAnalogOutNodeFrequencySet(self.out.device.handle, self.out.ix, self.ix, frequency))?;
+                    handle_dwf_errors(FDwfAnalogOutNodeAmplitudeSet(self.out.device.handle, self.out.ix, self.ix, amplitude))?;
+                    handle_dwf_errors(FDwfAnalogOutNodeOffsetSet(self.out.device.handle, self.out.ix, self.ix, offset))?;
+                    handle_dwf_errors(FDwfAnalogOutNodeSymmetrySet(self.out.device.handle, self.out.ix, self.ix, symmetry))?;
+                    handle_dwf_errors(FDwfAnalogOutNodePhaseSet(self.out.device.handle, self.out.ix, self.ix, phase_deg))?;
                 },
                 AnalogOutFunction::RampDown { frequency, amplitude, offset, symmetry, phase_deg } => {
-                    try_dwf!(FDwfAnalogOutNodeFunctionSet(self.out.device.handle, self.out.ix, self.ix, funcRampDown));
-                    try_dwf!(FDwfAnalogOutNodeFrequencySet(self.out.device.handle, self.out.ix, self.ix, frequency));
-                    try_dwf!(FDwfAnalogOutNodeAmplitudeSet(self.out.device.handle, self.out.ix, self.ix, amplitude));
-                    try_dwf!(FDwfAnalogOutNodeOffsetSet(self.out.device.handle, self.out.ix, self.ix, offset));
-                    try_dwf!(FDwfAnalogOutNodeSymmetrySet(self.out.device.handle, self.out.ix, self.ix, symmetry));
-                    try_dwf!(FDwfAnalogOutNodePhaseSet(self.out.device.handle, self.out.ix, self.ix, phase_deg));
+                    handle_dwf_errors(FDwfAnalogOutNodeFunctionSet(self.out.device.handle, self.out.ix, self.ix, funcRampDown))?;
+                    handle_dwf_errors(FDwfAnalogOutNodeFrequencySet(self.out.device.handle, self.out.ix, self.ix, frequency))?;
+                    handle_dwf_errors(FDwfAnalogOutNodeAmplitudeSet(self.out.device.handle, self.out.ix, self.ix, amplitude))?;
+                    handle_dwf_errors(FDwfAnalogOutNodeOffsetSet(self.out.device.handle, self.out.ix, self.ix, offset))?;
+                    handle_dwf_errors(FDwfAnalogOutNodeSymmetrySet(self.out.device.handle, self.out.ix, self.ix, symmetry))?;
+                    handle_dwf_errors(FDwfAnalogOutNodePhaseSet(self.out.device.handle, self.out.ix, self.ix, phase_deg))?;
                 },
                 AnalogOutFunction::Sine { frequency, amplitude, offset, symmetry, phase_deg } => {
-                    try_dwf!(FDwfAnalogOutNodeFunctionSet(self.out.device.handle, self.out.ix, self.ix, funcSine));
-                    try_dwf!(FDwfAnalogOutNodeFrequencySet(self.out.device.handle, self.out.ix, self.ix, frequency));
-                    try_dwf!(FDwfAnalogOutNodeAmplitudeSet(self.out.device.handle, self.out.ix, self.ix, amplitude));
-                    try_dwf!(FDwfAnalogOutNodeOffsetSet(self.out.device.handle, self.out.ix, self.ix, offset));
-                    try_dwf!(FDwfAnalogOutNodeSymmetrySet(self.out.device.handle, self.out.ix, self.ix, symmetry));
-                    try_dwf!(FDwfAnalogOutNodePhaseSet(self.out.device.handle, self.out.ix, self.ix, phase_deg));
+                    handle_dwf_errors(FDwfAnalogOutNodeFunctionSet(self.out.device.handle, self.out.ix, self.ix, funcSine))?;
+                    handle_dwf_errors(FDwfAnalogOutNodeFrequencySet(self.out.device.handle, self.out.ix, self.ix, frequency))?;
+                    handle_dwf_errors(FDwfAnalogOutNodeAmplitudeSet(self.out.device.handle, self.out.ix, self.ix, amplitude))?;
+                    handle_dwf_errors(FDwfAnalogOutNodeOffsetSet(self.out.device.handle, self.out.ix, self.ix, offset))?;
+                    handle_dwf_errors(FDwfAnalogOutNodeSymmetrySet(self.out.device.handle, self.out.ix, self.ix, symmetry))?;
+                    handle_dwf_errors(FDwfAnalogOutNodePhaseSet(self.out.device.handle, self.out.ix, self.ix, phase_deg))?;
                 },
                 AnalogOutFunction::Square { frequency, amplitude, offset, symmetry, phase_deg } => {
-                    try_dwf!(FDwfAnalogOutNodeFunctionSet(self.out.device.handle, self.out.ix, self.ix, funcSquare));
-                    try_dwf!(FDwfAnalogOutNodeFrequencySet(self.out.device.handle, self.out.ix, self.ix, frequency));
-                    try_dwf!(FDwfAnalogOutNodeAmplitudeSet(self.out.device.handle, self.out.ix, self.ix, amplitude));
-                    try_dwf!(FDwfAnalogOutNodeOffsetSet(self.out.device.handle, self.out.ix, self.ix, offset));
-                    try_dwf!(FDwfAnalogOutNodeSymmetrySet(self.out.device.handle, self.out.ix, self.ix, symmetry));
-                    try_dwf!(FDwfAnalogOutNodePhaseSet(self.out.device.handle, self.out.ix, self.ix, phase_deg));
+                    handle_dwf_errors(FDwfAnalogOutNodeFunctionSet(self.out.device.handle, self.out.ix, self.ix, funcSquare))?;
+                    handle_dwf_errors(FDwfAnalogOutNodeFrequencySet(self.out.device.handle, self.out.ix, self.ix, frequency))?;
+                    handle_dwf_errors(FDwfAnalogOutNodeAmplitudeSet(self.out.device.handle, self.out.ix, self.ix, amplitude))?;
+                    handle_dwf_errors(FDwfAnalogOutNodeOffsetSet(self.out.device.handle, self.out.ix, self.ix, offset))?;
+                    handle_dwf_errors(FDwfAnalogOutNodeSymmetrySet(self.out.device.handle, self.out.ix, self.ix, symmetry))?;
+                    handle_dwf_errors(FDwfAnalogOutNodePhaseSet(self.out.device.handle, self.out.ix, self.ix, phase_deg))?;
                 },
                 AnalogOutFunction::Triangle { frequency, amplitude, offset, symmetry, phase_deg } => {
-                    try_dwf!(FDwfAnalogOutNodeFunctionSet(self.out.device.handle, self.out.ix, self.ix, funcTriangle));
-                    try_dwf!(FDwfAnalogOutNodeFrequencySet(self.out.device.handle, self.out.ix, self.ix, frequency));
-                    try_dwf!(FDwfAnalogOutNodeAmplitudeSet(self.out.device.handle, self.out.ix, self.ix, amplitude));
-                    try_dwf!(FDwfAnalogOutNodeOffsetSet(self.out.device.handle, self.out.ix, self.ix, offset));
-                    try_dwf!(FDwfAnalogOutNodeSymmetrySet(self.out.device.handle, self.out.ix, self.ix, symmetry));
-                    try_dwf!(FDwfAnalogOutNodePhaseSet(self.out.device.handle, self.out.ix, self.ix, phase_deg));
+                    handle_dwf_errors(FDwfAnalogOutNodeFunctionSet(self.out.device.handle, self.out.ix, self.ix, funcTriangle))?;
+                    handle_dwf_errors(FDwfAnalogOutNodeFrequencySet(self.out.device.handle, self.out.ix, self.ix, frequency))?;
+                    handle_dwf_errors(FDwfAnalogOutNodeAmplitudeSet(self.out.device.handle, self.out.ix, self.ix, amplitude))?;
+                    handle_dwf_errors(FDwfAnalogOutNodeOffsetSet(self.out.device.handle, self.out.ix, self.ix, offset))?;
+                    handle_dwf_errors(FDwfAnalogOutNodeSymmetrySet(self.out.device.handle, self.out.ix, self.ix, symmetry))?;
+                    handle_dwf_errors(FDwfAnalogOutNodePhaseSet(self.out.device.handle, self.out.ix, self.ix, phase_deg))?;
                 },
             }
         }
@@ -354,7 +351,7 @@ impl<'a> AnalogOutNode<'a> {
 
     pub fn set_enabled(&self, enabled: bool) -> Result<()> {
         unsafe {
-            try_dwf!(FDwfAnalogOutNodeEnableSet(self.out.device.handle, self.out.ix, self.ix, to_c_bool(enabled)));
+            handle_dwf_errors(FDwfAnalogOutNodeEnableSet(self.out.device.handle, self.out.ix, self.ix, to_c_bool(enabled)))?;
         }
         Ok(())
     }
@@ -402,42 +399,42 @@ impl<'a> AnalogOut<'a> {
 
     pub fn set_duration(&self, duration: Duration) -> Result<()> {
         unsafe {
-            try_dwf!(FDwfAnalogOutRunSet(self.device.handle, self.ix, duration.num_nanoseconds().unwrap() as f64 / 1e9));
+            handle_dwf_errors(FDwfAnalogOutRunSet(self.device.handle, self.ix, duration.num_nanoseconds().unwrap() as f64 / 1e9))?;
         }
         Ok(())
     }
 
     pub fn set_repeat_count(&self, repeat_cnt: i32) -> Result<()> {
         unsafe {
-            try_dwf!(FDwfAnalogOutRepeatSet(self.device.handle, self.ix, repeat_cnt));
+            handle_dwf_errors(FDwfAnalogOutRepeatSet(self.device.handle, self.ix, repeat_cnt))?;
         }
         Ok(())
     }
 
     pub fn set_trigger_source(&self, src: TriggerSource) -> Result<()> {
         unsafe {
-            try_dwf!(FDwfAnalogOutTriggerSourceSet(self.device.handle, self.ix, src.code()));
+            handle_dwf_errors(FDwfAnalogOutTriggerSourceSet(self.device.handle, self.ix, src.code()))?;
         }
         Ok(())
     }
 
     pub fn set_idle_mode(&self, mode: AnalogOutIdleMode) -> Result<()> {
         unsafe {
-            try_dwf!(FDwfAnalogOutIdleSet(self.device.handle, self.ix, mode.code()));
+            handle_dwf_errors(FDwfAnalogOutIdleSet(self.device.handle, self.ix, mode.code()))?;
         }
         Ok(())
     }
 
     pub fn start(&self) -> Result<()> {
         unsafe {
-            try_dwf!(FDwfAnalogOutConfigure(self.device.handle, self.ix, to_c_bool(true)));
+            handle_dwf_errors(FDwfAnalogOutConfigure(self.device.handle, self.ix, to_c_bool(true)))?;
         }
         Ok(())
     }
 
     pub fn stop(&self) -> Result<()> {
         unsafe {
-            try_dwf!(FDwfAnalogOutConfigure(self.device.handle, self.ix, to_c_bool(false)));
+            handle_dwf_errors(FDwfAnalogOutConfigure(self.device.handle, self.ix, to_c_bool(false)))?;
         }
         Ok(())
     }
@@ -450,7 +447,7 @@ pub struct AnalogIO<'a> {
 impl<'a> AnalogIO<'a> {
     pub fn set_enabled(&self, enabled: bool) -> Result<()> {
         unsafe {
-            try_dwf!(FDwfAnalogIOEnableSet(self.device.handle, to_c_bool(enabled)));
+            handle_dwf_errors(FDwfAnalogIOEnableSet(self.device.handle, to_c_bool(enabled)))?;
         }
         Ok(())
     }
@@ -485,7 +482,7 @@ pub struct AnalogIOChannelNode<'a> {
 impl<'a> AnalogIOChannelNode<'a> {
     pub fn set_value(&self, value: f64) -> Result<()> {
         unsafe {
-            try_dwf!(FDwfAnalogIOChannelNodeSet(self.channel.io.device.handle, self.channel.ix, self.ix, value));
+            handle_dwf_errors(FDwfAnalogIOChannelNodeSet(self.channel.io.device.handle, self.channel.ix, self.ix, value))?;
         }
         Ok(())
     }
@@ -499,29 +496,29 @@ pub struct AnalogIn<'a> {
 impl<'a> AnalogIn<'a> {
     pub fn start(&self) -> Result<()> {
         unsafe {
-            try_dwf!(FDwfAnalogInConfigure(self.device.handle, to_c_bool(false), to_c_bool(true)));
+            handle_dwf_errors(FDwfAnalogInConfigure(self.device.handle, to_c_bool(false), to_c_bool(true)))?;
         }
         Ok(())
     }
 
     pub fn set_frequency(&self, freq: f64) -> Result<()> {
         unsafe {
-            try_dwf!(FDwfAnalogInFrequencySet(self.device.handle, freq));
+            handle_dwf_errors(FDwfAnalogInFrequencySet(self.device.handle, freq))?;
         }
         Ok(())
     }
 
     pub fn set_buffer_size(&self, buf_size: u32) -> Result<()> {
         unsafe {
-            try_dwf!(FDwfAnalogInBufferSizeSet(self.device.handle, buf_size as i32));
+            handle_dwf_errors(FDwfAnalogInBufferSizeSet(self.device.handle, buf_size as i32))?;
         }
         Ok(())
     }
 
     pub fn set_record_mode(&self, length: f64) -> Result<()> {
         unsafe {
-            try_dwf!(FDwfAnalogInRecordLengthSet(self.device.handle, length));
-            try_dwf!(FDwfAnalogInAcquisitionModeSet(self.device.handle, acqmodeRecord as ACQMODE));
+            handle_dwf_errors(FDwfAnalogInRecordLengthSet(self.device.handle, length))?;
+            handle_dwf_errors(FDwfAnalogInAcquisitionModeSet(self.device.handle, acqmodeRecord as ACQMODE))?;
         }
         Ok(())
     }
@@ -536,7 +533,7 @@ impl<'a> AnalogIn<'a> {
     pub fn get_status(&self) -> Result<AnalogAcquisitionStatus> {
         unsafe {
             let mut state: DwfState = mem::uninitialized();
-            try_dwf!(FDwfAnalogInStatus(self.device.handle, to_c_bool(true), (&mut state) as *mut DwfState));
+            handle_dwf_errors(FDwfAnalogInStatus(self.device.handle, to_c_bool(true), (&mut state) as *mut DwfState))?;
             Ok(match state {
                 DwfStateReady => AnalogAcquisitionStatus::Ready,
                 DwfStateConfig => AnalogAcquisitionStatus::Config,
@@ -553,7 +550,7 @@ impl<'a> AnalogIn<'a> {
     pub fn get_samples_left(&self) -> Result<i32> {
         unsafe {
             let mut ret = mem::uninitialized();
-            try_dwf!(FDwfAnalogInStatusSamplesLeft(self.device.handle, &mut ret as *mut c_int));
+            handle_dwf_errors(FDwfAnalogInStatusSamplesLeft(self.device.handle, &mut ret as *mut c_int))?;
             Ok(ret)
         }
     }
@@ -561,11 +558,11 @@ impl<'a> AnalogIn<'a> {
     pub fn get_record_status(&self) -> Result<(i32, i32, i32)> {
         unsafe {
             let (mut available, mut lost, mut corrupted) = mem::uninitialized();
-            try_dwf!(FDwfAnalogInStatusRecord(self.device.handle,
-                &mut available as *mut c_int,
-                &mut lost as *mut c_int,
-                &mut corrupted as *mut c_int
-            ));
+            handle_dwf_errors(FDwfAnalogInStatusRecord(self.device.handle,
+                                                       &mut available as *mut c_int,
+                                                       &mut lost as *mut c_int,
+                                                       &mut corrupted as *mut c_int
+            ))?;
             Ok((available, lost, corrupted))
         }
     }
@@ -590,14 +587,14 @@ pub struct AnalogInChannel<'a> {
 impl<'a> AnalogInChannel<'a> {
     pub fn set_offset(&self, offset: f64) -> Result<()> {
         unsafe {
-            try_dwf!(FDwfAnalogInChannelOffsetSet(self.input.device.handle, self.ix, offset));
+            handle_dwf_errors(FDwfAnalogInChannelOffsetSet(self.input.device.handle, self.ix, offset))?;
         }
         Ok(())
     }
 
     pub fn set_range(&self, range: f64) -> Result<()> {
         unsafe {
-            try_dwf!(FDwfAnalogInChannelRangeSet(self.input.device.handle, self.ix, range));
+            handle_dwf_errors(FDwfAnalogInChannelRangeSet(self.input.device.handle, self.ix, range))?;
         }
         Ok(())
     }
@@ -607,8 +604,8 @@ impl<'a> AnalogInChannel<'a> {
             let original_len = dest.len();
             dest.reserve(available as usize);
             dest.set_len(original_len + available as usize);
-            try_dwf!(FDwfAnalogInStatusData(self.input.device.handle, self.ix,
-                dest.as_mut_ptr().offset(original_len as isize), available));
+            handle_dwf_errors(FDwfAnalogInStatusData(self.input.device.handle, self.ix,
+                                                     dest.as_mut_ptr().offset(original_len as isize), available))?;
         }
         Ok(())
     }
@@ -622,21 +619,21 @@ pub struct Device {
 impl Device {
     pub fn set_auto_configure(&self, enabled: bool) -> Result<()> {
         unsafe {
-            try_dwf!(FDwfDeviceAutoConfigureSet(self.handle, to_c_bool(enabled)));
+            handle_dwf_errors(FDwfDeviceAutoConfigureSet(self.handle, to_c_bool(enabled)))?;
         }
         Ok(())
     }
 
     pub fn reset(&self) -> Result<()> {
         unsafe {
-            try_dwf!(FDwfDeviceReset(self.handle));
+            handle_dwf_errors(FDwfDeviceReset(self.handle))?;
         }
         Ok(())
     }
 
     pub fn set_enabled(&self, enabled: bool) -> Result<()> {
         unsafe {
-            try_dwf!(FDwfDeviceEnableSet(self.handle, to_c_bool(enabled)));
+            handle_dwf_errors(FDwfDeviceEnableSet(self.handle, to_c_bool(enabled)))?;
         }
         Ok(())
     }
